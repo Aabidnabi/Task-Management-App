@@ -47,6 +47,7 @@ const generateHTML = task => {
 };
 
 // ===== Save Task =====
+// ===== Save Task =====
 const saveTaskFromModal = () => {
   const title = document.getElementById("taskTitle").value.trim();
   if (!title) return alert("Task name is required!");
@@ -57,10 +58,25 @@ const saveTaskFromModal = () => {
     description: document.getElementById("taskDescription").value.trim(),
     category: document.getElementById("taskCategory").value,
     deadline: document.getElementById("taskDeadline").value,
-    image: document.getElementById("taskImage").value.trim(),
-    status: document.getElementById("taskStatus").value
+    status: document.getElementById("taskStatus").value,
+    image: "" // will set below
   };
 
+  const fileInput = document.getElementById("taskImage");
+  if (fileInput.files && fileInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      task.image = e.target.result; // store as base64
+      saveTask(task);
+    };
+    reader.readAsDataURL(fileInput.files[0]);
+  } else {
+    saveTask(task); // no image selected
+  }
+};
+
+// ===== Internal save function =====
+function saveTask(task) {
   if (editingId) {
     globalTaskData = globalTaskData.map(t => t.id === editingId ? task : t);
     editingId = null;
@@ -72,7 +88,8 @@ const saveTaskFromModal = () => {
   reloadTasks();
   updateTaskOverview();
   resetForm();
-};
+}
+
 
 // ===== Edit Task =====
 const editCard = id => {
