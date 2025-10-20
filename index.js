@@ -12,7 +12,7 @@ const limitTo100Words = text => {
 
 // ===== Generate Task Card HTML =====
 const generateHTML = task => {
-  const imgSrc = task.image?.trim() || "https://via.placeholder.com/400x200?text=No+Image";
+  const imgSrc = task.image || "https://via.placeholder.com/400x200?text=No+Image";
   const statusClass = task.status.toLowerCase().replace(/\s+/g, "-");
   const description = limitTo100Words(task.description);
 
@@ -47,10 +47,12 @@ const generateHTML = task => {
 };
 
 // ===== Save Task =====
-// ===== Save Task =====
 const saveTaskFromModal = () => {
   const title = document.getElementById("taskTitle").value.trim();
   if (!title) return alert("Task name is required!");
+
+  // Preserve old image when editing
+  const oldImage = editingId ? (globalTaskData.find(t => t.id === editingId)?.image || "") : "";
 
   const task = {
     id: editingId || `${Date.now()}`,
@@ -59,19 +61,19 @@ const saveTaskFromModal = () => {
     category: document.getElementById("taskCategory").value,
     deadline: document.getElementById("taskDeadline").value,
     status: document.getElementById("taskStatus").value,
-    image: "" // will set below
+    image: oldImage // default
   };
 
   const fileInput = document.getElementById("taskImage");
   if (fileInput.files && fileInput.files[0]) {
     const reader = new FileReader();
     reader.onload = function(e) {
-      task.image = e.target.result; // store as base64
+      task.image = e.target.result; // replace only if new file selected
       saveTask(task);
     };
     reader.readAsDataURL(fileInput.files[0]);
   } else {
-    saveTask(task); // no image selected
+    saveTask(task); // keep old image
   }
 };
 
@@ -83,13 +85,11 @@ function saveTask(task) {
   } else {
     globalTaskData.push(task);
   }
-
   saveToLocalStorage();
   reloadTasks();
   updateTaskOverview();
   resetForm();
 }
-
 
 // ===== Edit Task =====
 const editCard = id => {
@@ -97,14 +97,19 @@ const editCard = id => {
   if (!task) return;
 
   editingId = id;
+
   document.getElementById("taskTitle").value = task.title;
   document.getElementById("taskDescription").value = task.description;
   document.getElementById("taskDeadline").value = task.deadline;
   document.getElementById("taskCategory").value = task.category;
   document.getElementById("taskStatus").value = task.status;
-  document.getElementById("taskImage").value = task.image;
 
-  new bootstrap.Modal(document.getElementById("newTask")).show();
+  // Clear file input (cannot prefill)
+  document.getElementById("taskImage").value = "";
+
+  const modalEl = document.getElementById("newTask");
+  const modal = new bootstrap.Modal(modalEl);
+  modal.show();
 };
 
 // ===== Delete Task =====
@@ -143,7 +148,6 @@ const updateTaskOverview = () => {
 
 // ===== Local Storage =====
 const saveToLocalStorage = () => localStorage.setItem("taskData", JSON.stringify(globalTaskData));
-
 const loadExistingCards = () => {
   const stored = localStorage.getItem("taskData");
   if (stored) globalTaskData = JSON.parse(stored);
