@@ -1,177 +1,164 @@
-const taskContainer = document.querySelector(".task__container");
+// ===== Elements & State =====
+const taskContainer = document.getElementById("taskContainer");
 let globalTaskData = [];
+let editingId = null;
 
-const generateHTML = (taskData) => {
-  return ` <div id=${taskData.id} class="col-md-6 col-lg-4 my-4">
-<div class="card">
-  <div class="card-header gap-2 d-flex justify-content-end">
-    <button class="btn btn-outline-info" name=${taskData.id} onclick="editCard.apply(this, arguments)" >
-      <i class="fal fa-pencil" name=${taskData.id}></i>
-    </button>
-    <button class="btn btn-outline-danger" name=${taskData.id} onclick="deleteCard.apply(this, arguments)">
-      <i class="far fa-trash-alt" name=${taskData.id}></i>
-    </button>
-  </div>
-  <div class="card-body">
-    <img
-      src="${taskData.image}"
-      alt="image"
-      class="card-img"
-    />
-    <h5 class="card-title mt-4">${taskData.title}</h5>
-    <p class="card-text">
-      ${taskData.description}
-    </p>
-    <span class="badge bg-primary">${taskData.type}</span>
-  </div>
-  <div class="card-footer">
-    <button class="btn btn-outline-primary" name=${taskData.id}>Open Task</button>
-  </div>
-</div>
-</div>`;
+// ===== Limit description to 100 words =====
+const limitTo100Words = text => {
+  if (!text) return "";
+  const words = text.trim().split(/\s+/);
+  return words.length <= 100 ? text : words.slice(0, 100).join(" ") + "...";
 };
 
-const saveToLocalStorage = () =>
-  localStorage.setItem("taskyCA", JSON.stringify({ card: globalTaskData }));
+// ===== Generate Task Card HTML =====
+const generateHTML = task => {
+  const imgSrc = task.image?.trim() || "https://via.placeholder.com/400x200?text=No+Image";
+  const statusClass = task.status.toLowerCase().replace(/\s+/g, "-");
+  const description = limitTo100Words(task.description);
 
-const insertToDOM = (content) =>
-  taskContainer.insertAdjacentHTML("beforeend", content);
+  return `
+    <div class="col-12 col-md-6 col-lg-4" id="${task.id}">
+      <div class="task__card h-100">
+        <img src="${imgSrc}" onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'" />
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title">${task.title}</h5>
+          <p class="card-text">${description || "No description"}</p>
+          <p><strong>Deadline:</strong> ${task.deadline || "No deadline"}</p>
+          <p><strong>Category:</strong> ${task.category}</p>
+          <div class="mt-auto d-flex justify-content-between align-items-center">
+            <span class="status-label ${statusClass}">${task.status}</span>
+            <select class="status-dropdown" onchange="changeTaskStatus('${task.id}', this.value)">
+              <option ${task.status === "Pending" ? "selected" : ""}>Pending</option>
+              <option ${task.status === "In Progress" ? "selected" : ""}>In Progress</option>
+              <option ${task.status === "Completed" ? "selected" : ""}>Completed</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="btn btn-sm btn-outline-info me-1" onclick="editCard('${task.id}')">
+            <i class="fal fa-pencil"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteCard('${task.id}')">
+            <i class="far fa-trash-alt"></i>
+          </button>
+        </div>
+      </div>
+    </div>`;
+};
 
-const addNewCard = () => {
-  // get task data
-  const taskData = {
-    id: `${Date.now()}`,
-    title: document.getElementById("taskTitle").value,
-    image: document.getElementById("imageURL").value,
-    type: document.getElementById("taskType").value,
-    description: document.getElementById("taskDescription").value,
+// ===== Save Task =====
+const saveTaskFromModal = () => {
+  const title = document.getElementById("taskTitle").value.trim();
+  if (!title) return alert("Task name is required!");
+
+  const task = {
+    id: editingId || `${Date.now()}`,
+    title,
+    description: document.getElementById("taskDescription").value.trim(),
+    category: document.getElementById("taskCategory").value,
+    deadline: document.getElementById("taskDeadline").value,
+    image: document.getElementById("taskImage").value.trim(),
+    status: document.getElementById("taskStatus").value
   };
 
-  globalTaskData.push(taskData);
+  if (editingId) {
+    globalTaskData = globalTaskData.map(t => t.id === editingId ? task : t);
+    editingId = null;
+  } else {
+    globalTaskData.push(task);
+  }
 
   saveToLocalStorage();
-
-  const newCard = generateHTML(taskData);
-
-  insertToDOM(newCard);
-
-  // clear the form
-  document.getElementById("taskTitle").value = "";
-  document.getElementById("imageURL").value = "";
-  document.getElementById("taskType").value = "";
-  document.getElementById("taskDescription").value = "";
-
-  return;
+  reloadTasks();
+  updateTaskOverview();
+  resetForm();
 };
+
+// ===== Edit Task =====
+const editCard = id => {
+  const task = globalTaskData.find(t => t.id === id);
+  if (!task) return;
+
+  editingId = id;
+  document.getElementById("taskTitle").value = task.title;
+  document.getElementById("taskDescription").value = task.description;
+  document.getElementById("taskDeadline").value = task.deadline;
+  document.getElementById("taskCategory").value = task.category;
+  document.getElementById("taskStatus").value = task.status;
+  document.getElementById("taskImage").value = task.image;
+
+  new bootstrap.Modal(document.getElementById("newTask")).show();
+};
+
+// ===== Delete Task =====
+const deleteCard = id => {
+  globalTaskData = globalTaskData.filter(t => t.id !== id);
+  saveToLocalStorage();
+  reloadTasks();
+  updateTaskOverview();
+};
+
+// ===== Change Task Status =====
+const changeTaskStatus = (id, status) => {
+  globalTaskData = globalTaskData.map(t => t.id === id ? { ...t, status } : t);
+  saveToLocalStorage();
+  reloadTasks();
+  updateTaskOverview();
+};
+
+// ===== Reload Tasks =====
+const reloadTasks = () => {
+  taskContainer.innerHTML = globalTaskData.map(generateHTML).join("");
+};
+
+// ===== Task Overview =====
+const updateTaskOverview = () => {
+  const total = globalTaskData.length;
+  const completed = globalTaskData.filter(t => t.status === "Completed").length;
+  const inProgress = globalTaskData.filter(t => t.status === "In Progress").length;
+  const pending = globalTaskData.filter(t => t.status === "Pending").length;
+
+  document.getElementById("totalCount").textContent = total;
+  document.getElementById("completedCount").textContent = completed;
+  document.getElementById("progressCount").textContent = inProgress;
+  document.getElementById("pendingCount").textContent = pending;
+};
+
+// ===== Local Storage =====
+const saveToLocalStorage = () => localStorage.setItem("taskData", JSON.stringify(globalTaskData));
 
 const loadExistingCards = () => {
-  // check localstorage
-  const getData = localStorage.getItem("taskyCA");
-
-  // parse JSON data, if exist
-  if (!getData) return;
-
-  const taskCards = JSON.parse(getData);
-
-  globalTaskData = taskCards.card;
-
-  globalTaskData.map((taskData) => {
-    const newCard = generateHTML(taskData);
-    insertToDOM(newCard);
-  });
-
-  return;
+  const stored = localStorage.getItem("taskData");
+  if (stored) globalTaskData = JSON.parse(stored);
+  reloadTasks();
+  updateTaskOverview();
 };
 
-const deleteCard = (event) => {
-  const targetID = event.target.getAttribute("name");
-  const elementType = event.target.tagName;
+// ===== Reset Form =====
+const resetForm = () => {
+  ["taskTitle","taskDescription","taskDeadline","taskImage"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("taskCategory").value = "Development";
+  document.getElementById("taskStatus").value = "Pending";
+};
 
-  const removeTask = globalTaskData.filter((task) => task.id !== targetID);
-  globalTaskData = removeTask;
+// ===== Search =====
+document.getElementById("searchInput").addEventListener("input", e => {
+  const q = e.target.value.toLowerCase();
+  const filtered = globalTaskData.filter(t =>
+    t.title.toLowerCase().includes(q) ||
+    t.description.toLowerCase().includes(q) ||
+    t.category.toLowerCase().includes(q)
+  );
+  taskContainer.innerHTML = filtered.map(generateHTML).join("");
+});
 
-
-  saveToLocalStorage();
-
-  // access DOM to remove card
-  if (elementType === "BUTTON") {
-    return taskContainer.removeChild(
-      event.target.parentNode.parentNode.parentNode
-    );
-  } else {
-    return taskContainer.removeChild(
-      event.target.parentNode.parentNode.parentNode.parentNode
-    );
+// ===== Clear All =====
+document.getElementById("clearAllDesktop").addEventListener("click", () => {
+  if (!globalTaskData.length) return alert("No tasks to clear.");
+  if (confirm("Delete all tasks?")) {
+    globalTaskData = [];
+    saveToLocalStorage();
+    reloadTasks();
+    updateTaskOverview();
   }
-};
-
-const editCard = (event) => {
-  const elementType = event.target.tagName;
-
-  let taskTitle;
-  let taskType;
-  let taskDescription;
-  let parentElement;
-  let submitButton;
-
-  if (elementType === "BUTTON") {
-    parentElement = event.target.parentNode.parentNode;
-  } else {
-    parentElement = event.target.parentNode.parentNode.parentNode;
-  }
-
-  taskTitle = parentElement.childNodes[3].childNodes[3];
-  taskDescription = parentElement.childNodes[3].childNodes[5];
-  taskType = parentElement.childNodes[3].childNodes[7];
-  submitButton = parentElement.childNodes[5].childNodes[1];
-
-  taskTitle.setAttribute("contenteditable", "true");
-  taskDescription.setAttribute("contenteditable", "true");
-  taskType.setAttribute("contenteditable", "true");
-  submitButton.setAttribute("onclick", "saveEdit.apply(this, arguments)");
-  submitButton.innerHTML = "Save Changes";
-};
-
-const saveEdit = (event) => {
-  const targetID = event.target.getAttribute("name");
-  const elementType = event.target.tagName;
-
-  let parentElement;
-
-  if (elementType === "BUTTON") {
-    parentElement = event.target.parentNode.parentNode;
-  } else {
-    parentElement = event.target.parentNode.parentNode.parentNode;
-  }
-
-  const taskTitle = parentElement.childNodes[3].childNodes[3];
-  const taskDescription = parentElement.childNodes[3].childNodes[5];
-  const taskType = parentElement.childNodes[3].childNodes[7];
-  const submitButton = parentElement.childNodes[5].childNodes[1];
-
-  const updatedData = {
-    title: taskTitle.innerHTML,
-    type: taskType.innerHTML,
-    description: taskDescription.innerHTML,
-  };
-
-  console.log({ updatedData, targetID });
-
-  const updateGlobalTasks = globalTaskData.map((task) => {
-    if (task.id === targetID) {
-      console.log({ ...task, ...updatedData });
-      return { ...task, ...updatedData };
-    }
-    return task;
-  });
-
-  globalTaskData = updateGlobalTasks;
-
-  saveToLocalStorage();
-
-  taskTitle.setAttribute("contenteditable", "false");
-  taskDescription.setAttribute("contenteditable", "false");
-  taskType.setAttribute("contenteditable", "false");
-  submitButton.innerHTML = "Open Task";
-};
-
+});

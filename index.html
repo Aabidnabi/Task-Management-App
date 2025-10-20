@@ -1,129 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TaskBlaze</title>
+
     <!-- Bootstrap CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
-      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
-      crossorigin="anonymous"
     />
-
-    <!-- fontawesome icons -->
     <link
       rel="stylesheet"
       href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"
-      integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p"
-      crossorigin="anonymous"
     />
 
-    <title>Task Management APP</title>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styleS.css" />
   </head>
-  <body style="background-color: #ebf3ff" onload="loadExistingCards()">
-    <!-- Modal -->
-    <div
-      class="modal fade"
-      id="newTask"
-      tabindex="-1"
-      aria-labelledby="newTaskLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="newTaskLabel">Add New Task</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label for="imageURL" class="form-label">Image URL</label>
-              <input
-                type="url"
-                class="form-control"
-                id="imageURL"
-                placeholder="https://image.com/image.jpg"
-              />
-            </div>
-            <div class="mb-3">
-              <label for="taskTitle" class="form-label">Task Title</label>
-              <input
-                type="text"
-                class="form-control"
-                id="taskTitle"
-                placeholder="API Development"
-              />
-            </div>
-            <div class="mb-3">
-              <label for="taskType" class="form-label">Task Type</label>
-              <input
-                type="text"
-                class="form-control"
-                id="taskType"
-                placeholder="Software Development"
-              />
-            </div>
-            <div class="mb-3">
-              <label for="taskDescription" class="form-label"
-                >Task Description</label
-              >
-              <textarea
-                id="taskDescription"
-                class="form-control"
-                rows="3"
-                placeholder="This API has been created"
-              ></textarea>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Close
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              onclick="addNewCard()"
-              data-bs-dismiss="modal"
-            >
-              Save changes
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+  <body onload="loadExistingCards()">
+    <!-- NAVBAR -->
     <header>
-      <nav class="navbar navbar-expand-lg navbar-light bg-light shadow">
+      <nav class="navbar shadow-sm">
         <div class="container-fluid">
-          <a class="fs-3 fw-bolder" href="#">TaskBlaze</a>
-          <button
-            class="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent"
-            aria-expanded="false"
-            aria-label="Toggle navigation"
-          >
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav ms-3 me-auto mb-2 mb-lg-0">
-            
-            </ul>
+          <a class="navbar-brand" href="#">TaskBlaze</a>
+          <div class="navbar-buttons d-flex gap-2">
+            <button
+              class="btn btn-outline-danger"
+              id="clearAllDesktop"
+              type="button"
+            >
+              Clear All
+            </button>
             <button
               class="btn btn-primary"
-              type="button"
               data-bs-toggle="modal"
               data-bs-target="#newTask"
             >
@@ -134,35 +45,149 @@
       </nav>
     </header>
 
-    <main class="container">
-      <section class="row justify-content-center mt-5">
-        <div class="col-md-8 col-lg-6">
-          <div class="input-group mb-3 shadow">
-            <input
-              type="search"
-              class="form-control"
-              placeholder="Search Task"
-              aria-label="Search Task"
-              aria-describedby="basic-addon1"
-            />
-            <span class="input-group-text" id="basic-addon1">
-              <i class="far fa-search"></i>
-            </span>
+    <!-- MAIN CONTENT -->
+    <main class="container py-4">
+      <!-- TASK OVERVIEW -->
+      <section id="task-overview" class="mb-4">
+        <h4 class="fw-bold mb-3">Task Overview</h4>
+        <div class="overview-grid">
+          <div class="overview-tab total">
+            <h6>Total Tasks</h6>
+            <p id="totalCount">0</p>
+          </div>
+          <div class="overview-tab completed">
+            <h6>Completed</h6>
+            <p id="completedCount">0</p>
+          </div>
+          <div class="overview-tab progress">
+            <h6>In Progress</h6>
+            <p id="progressCount">0</p>
+          </div>
+          <div class="overview-tab pending">
+            <h6>Pending</h6>
+            <p id="pendingCount">0</p>
           </div>
         </div>
       </section>
 
-      <!-- Task Container -->
-      <section class="task__container row"></section>
+      <!-- SEARCH TASKS -->
+      <section class="row justify-content-center mb-3">
+        <div class="col-md-8 col-lg-6">
+          <div class="input-group shadow-sm">
+            <input
+              id="searchInput"
+              type="search"
+              class="form-control"
+              placeholder="Search task by title, category, or description..."
+            />
+            <span class="input-group-text"><i class="far fa-search"></i></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- TASK CARDS -->
+      <section class="row g-3" id="taskContainer"></section>
     </main>
 
-    <!-- JavaScript Bundle with Popper -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
-      crossorigin="anonymous"
-    ></script>
+    <!-- ADD / EDIT MODAL -->
+    <div class="modal fade" id="newTask" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Add / Edit Task</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Task Name *</label>
+              <input
+                id="taskTitle"
+                type="text"
+                class="form-control"
+                placeholder="Enter task name"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Task Description</label>
+              <textarea
+                id="taskDescription"
+                rows="3"
+                class="form-control"
+                placeholder="Enter task description"
+              ></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Deadline</label>
+              <input id="taskDeadline" type="date" class="form-control" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Category</label>
+              <select id="taskCategory" class="form-select">
+                <option value="Development">Development</option>
+                <option value="Design">Design</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Status</label>
+              <select id="taskStatus" class="form-select">
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Image URL</label>
+              <input
+                id="taskImage"
+                type="url"
+                class="form-control"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">
+              Close
+            </button>
+            <button
+              class="btn btn-primary"
+              onclick="saveTaskFromModal()"
+              data-bs-dismiss="modal"
+            >
+              Save Task
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
+    <!-- FOOTER -->
+    <footer class="footer mt-5">
+      <div
+        class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-2"
+      >
+        <!-- Text Section -->
+        <p class="footer-text mb-2 mb-md-0 text-center text-md-start">
+          &copy; 2025 TaskBlaze. All rights reserved. <br class="d-md-none" />
+          Made with <span style="color: #e74c3c">&#10084;</span> by
+          <strong>Aabid Nabi</strong>
+        </p>
+
+        <!-- Social Icons -->
+        <div
+          class="d-flex gap-3 justify-content-center justify-content-md-start"
+        >
+          <a href="#" class="text-dark"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" class="text-dark"><i class="fab fa-twitter"></i></a>
+          <a href="#" class="text-dark"><i class="fab fa-linkedin-in"></i></a>
+          <a href="#" class="text-dark"><i class="fab fa-github"></i></a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="index.js"></script>
   </body>
 </html>
